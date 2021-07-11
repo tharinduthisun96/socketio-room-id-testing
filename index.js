@@ -6,6 +6,16 @@ const server = require('http').createServer(app);
 const io = require('socket.io')(server);
 const port = process.env.PORT || 3000;
 
+const redis = require('redis');
+const client = redis.createClient({
+    host: 'localhost',
+    port: 6379
+});
+
+client.on("error", function(error) {
+  console.error(error);
+});
+
 server.listen(port, () => {
   console.log('Server listening at port %d', port);
 });
@@ -34,9 +44,24 @@ io.on('connection', (socket) => {
   // when the client emits 'add user', this listens and executes
   socket.on('add user', (username) => {
     if (addedUser) return;
+	var roomName = 'room'+numUsers;
+	socket.join(roomName);
+    
+	// we store the username in the socket session for this client
+	
+	
+	client.set('rooms', roomName, (err, reply) => {
+    if (err) throw err;
+    console.log(reply);
 
-socket.join('room'+numUsers);
-    // we store the username in the socket session for this client
+	client.get('rooms', (err, reply) => {
+			if (err) throw err;
+			console.log(reply);
+		});
+	});
+		
+	
+	
     socket.username = username;
     ++numUsers;
     addedUser = true;
